@@ -21,12 +21,14 @@ function run_local() {
 <div class=form_line>
     <label for=gname>Game name</label><input name=gname id=gname size=40>
 </div>
+<!--
 <div class=form_line>
     <label for=humans>Human players</label><input name=humans id=humans size=5>
 </div>
 <div class=form_line>
     <label for=dummies>Dummy players</label><input name=dummies id=dummies size=5>
 </div>
+-->
 <div class=form_line>
     <label for=player_names">Player names</label><textarea name=player_names id=player_names rows=6 cols=20></textarea>
 </div>
