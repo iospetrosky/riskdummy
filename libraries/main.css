@@ -17,9 +17,9 @@ a:hover {
 }
 
 h1 {
-	color: #fff;
-	background-color: #dd4814;
-	border-bottom: 1px solid #d0d0d0;
+	color: #cef791;
+	background-color: #4f6d23;
+	border-bottom: 2px solid #344c11;
 	font-size: 22px;
 	font-weight: bold;
 	margin: 0 0 2px 0;
@@ -69,12 +69,13 @@ p {
 }
 
 .menubuttons button {
-    background-color: #4CAF50; /* Green background */
-    border: 1px solid green; /* Green border */
-    color: white; /* White text */
-    padding: 10px 24px; /* Some padding */
-    cursor: pointer; /* Pointer/hand icon */
-    float: left; /* Float the buttons side by side */
+    background-color: #f7e49e; 
+    border: 1px solid #c6b39f; 
+    color: #635d57; 
+    padding: 10px 24px;
+    cursor: pointer;
+    float: left;
+    font-weight: bold;
 }
 
 /* Clear floats (clearfix hack) */
@@ -85,7 +86,7 @@ p {
 }
 
 .menubuttons .current {
-    background-color: red;
+    background-color: #efb377;
 }
 
 .menubuttons button:not(:last-child) {
@@ -94,5 +95,29 @@ p {
 
 /* Add a background color on hover */
 .menubuttons button:hover {
-    background-color: #3e8e41;
+    background-color: #eddac7;
 }
+
+
+/* form things */
+.form_line {
+    margin-bottom: 4px;
+}
+
+label {
+    color: #B4886B;
+    font-weight: bold;
+    width: 150px;
+    display: inline-block;
+}
+label, textarea {
+    vertical-align: top;
+} 
+
+label:after { content: ": " }
+
+input {
+    display: inline-block;
+}
+
+

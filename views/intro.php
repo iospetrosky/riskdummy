@@ -70,12 +70,13 @@ $(document).ready(function () {
         $links = array("continent" => "Continents",
                        "territory" => "Territories",
                        );
-    elseif ($url[0] == "display"):
-        $links = array("map" => "Map",
+    elseif ($url[0] == "play"):
+        $links = array("game" => "Game",
+                        "map" => "Map",
                         );
     else:
         $links = array("editor" => "Editor",
-                       "display" => "Viewer" );
+                       "play" => "Play" );
     endif;
 
     foreach($links as $link=>$text) {

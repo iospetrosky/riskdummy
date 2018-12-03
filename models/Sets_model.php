@@ -1,4 +1,3 @@
-
 <?php
 // this is the DATA layer. No output here!!!
 
@@ -26,4 +25,3 @@ class Sets_model extends CI_Model {
     }
     
 }
-    
