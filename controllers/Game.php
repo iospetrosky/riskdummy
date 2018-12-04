@@ -10,15 +10,11 @@ class Game extends CI_Controller {
         $this->load->model('sets_model');
     }
     
-	public function index($current_game = false)	{
+	public function index()	{
         $data["url"] = explode("/", $this->uri->uri_string());
         $this->load->view('intro',$data);
-        // load different views according to cookie settings
-        //set_cookie("last_user",$current_user,100000);
-        if ($current_game) {
-            $data["game"] = $this->game_model->get_game($current_game); // gets an object including players and dummies
-            $this->load->view('game_display',$data);
-        } elseif($current_game = get_cookie("current_game")) {
+        
+        if($current_game = get_cookie("current_game")) {
             $data["game"] = $this->game_model->get_game($current_game); // gets an object including players and dummies
             $this->load->view('game_display',$data);
         } else {
@@ -29,10 +25,39 @@ class Game extends CI_Controller {
     public function newgame() {
         $players = explode("\n",$this->input->post("player_names"));
         $dummies = explode("\n",$this->input->post("dummy_names"));
-        $res = $this->game_model->newgame($this->input->post("gname"),$players,$dummies);
+        $auto = $this->input->post("autoassign");
+        $res = $this->game_model->newgame($this->input->post("gname"),$players,$dummies,$auto);
         //$res = 4;
         set_cookie("current_game",$res,10000000);
-        $this->index($res);
+        
+        $data["url"] = explode("/", $this->uri->uri_string());
+        $data["game"] = $this->game_model->get_game($res); // gets an object including players and dummies
+
+        $this->load->view('intro',$data);
+        $this->load->view('game_display',$data);
+    }
+    
+    public function delgame($id_game = false) {
+        if ($id_game) {
+            $current_game = $id_game;
+        } else {
+            $current_game = get_cookie("current_game");
+        }
+        $this->game_model->delete_game($current_game);
+        set_cookie("current_game",0,-100);
+
+        $data["url"] = explode("/", $this->uri->uri_string());
+        $this->load->view('intro',$data);
+        $this->load->view('game_new',$data);
+    }
+    
+    public function updcolors() {
+        $players = $this->input->post("players");
+        $colors = $this->input->post("colors");
+        for($j=0; $j<count($players); $j++) {
+            $this->game_model->change_color($players[$j], $colors[$j]);
+        }
+        echo "Colors updated";
     }
     
 }

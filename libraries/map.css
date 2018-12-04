@@ -1,0 +1,31 @@
+﻿/* The Map styles */
+.map_cell {
+    display: inline-block;
+    width: 120px;
+    height: 120px;
+    padding: 8px;
+    font-size: 15px;
+    text-align: bottom;
+    vertical-align: top;
+}
+.ocean {
+    background-color: #70a6ff;
+}
+.continent_6 {
+    background-color: #f9b05c; 
+}
+.continent_2 {
+    background-color: #f3a8ff; 
+}
+.continent_3 {
+    background-color: #5dd37c; 
+}
+.continent_1 {
+    background-color: #9e9043; 
+}
+.continent_5 {
+    background-color: #9e9043; 
+}
+.continent_7 {
+    background-color: #ff35ab; 
+}

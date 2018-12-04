@@ -49,13 +49,15 @@ p {
 .row_edited {
     background-color: red;
 }
-
+.clickable {
+    cursor:pointer;
+}
 .head_display_cell {
     display: inline-block;
     background-color: #c3c3d8;
     color: #e0975c;
     font-weight: bold;
-    height: 60px;
+    #height: 20px;
     vertical-align: bottom;
     display: table-cell;
 }

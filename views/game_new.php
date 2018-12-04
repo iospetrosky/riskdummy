@@ -21,14 +21,6 @@ function run_local() {
 <div class=form_line>
     <label for=gname>Game name</label><input name=gname id=gname size=40>
 </div>
-<!--
-<div class=form_line>
-    <label for=humans>Human players</label><input name=humans id=humans size=5>
-</div>
-<div class=form_line>
-    <label for=dummies>Dummy players</label><input name=dummies id=dummies size=5>
-</div>
--->
 <div class=form_line>
     <label for=player_names">Player names</label><textarea name=player_names id=player_names rows=6 cols=20></textarea>
 </div>
@@ -36,7 +28,12 @@ function run_local() {
     <label for=dummy_names>Dummy names</label><textarea name=dummy_names id=dummy_names rows=6 cols=20></textarea>
 </div>
 <div class=form_line>
-    <button id=save_game ty_pe=button>Create game</button>
+    <label for=autoassign>Auto assign territories</label><input type=checkbox name=autoassign id=autoassign value="Y">
+</div>
+
+
+<div class=form_line>
+    <button id=save_game>Create game</button>
 </div>
 
 

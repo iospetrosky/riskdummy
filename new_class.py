@@ -2,7 +2,7 @@
 #import subprocess as sp
 import os.path as path
 
-xclass = "Game"
+xclass = "Map"
 
 #questo va in restyling
 

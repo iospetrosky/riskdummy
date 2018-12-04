@@ -40,6 +40,12 @@ $(document).ready(function () {
 <?php
     echo link_tag('riskdummy/libraries/main.css');
     echo link_tag('riskdummy/libraries/modal.css');
+    if (isset($css)) {
+        // we have an array of more CSS to load
+        foreach($css as $c) {
+            echo link_tag("riskdummy/libraries/{$c}.css");
+        }
+    }
 ?>
 
 
@@ -66,6 +72,8 @@ $(document).ready(function () {
 <button onclick="Nav('<?php echo config_item('index_page_url') ; ?>')">Home</button>
 
 <?php 
+    if ($url[0] == "game") $url[0] = "play";
+
     if ($url[0] == "editor"): 
         $links = array("continent" => "Continents",
                        "territory" => "Territories",

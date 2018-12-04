@@ -57,3 +57,4 @@ $route['default_controller'] = 'welcome';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
 $route['play/game'] = 'game';
+$route['play/map'] = 'map';
