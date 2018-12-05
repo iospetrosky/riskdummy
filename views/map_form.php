@@ -15,12 +15,23 @@ function run_local() {
             data = JSON.parse(data)
             $("#terr_id").val(data.id)
             $("#armies").val(data.armies)
+            $("#player_id").val(data.id_player)
             $("#terr_form").css("visibility","")
             
         })
     })
     $("#terr_form_hide").click(function() {
         $("#terr_form").css("visibility","hidden")
+    })
+    $("#terr_form_save").click(function() {
+        $.post(base_url + "/map/saveterritory", 
+                    {"id": $("#terr_id").val(), "player": $("#player_id").val(), "armies": $("#armies").val() },
+                     function(data) {
+                        $("#terr_form").css("visibility","hidden")
+                        data = JSON.parse(data)
+                        $("#"+data.id+"_celldata").html(data.pname + " - " + data.armies)
+                     } )
+        
     })
             
 } // run_local    
@@ -47,7 +58,12 @@ foreach($cells as $cell) {
         }
     }
     //$content = sprintf("%s<br>Y:%s X:%s",$cell->tname, $cell->map_y, $cell->map_x);
-    $content = sprintf("<span class=terr_button id=%d_cell>%s</span><br>%s - %d",$cell->id,$cell->tname,$cell->pname,$cell->armies);
+    $content = sprintf("<span class=terr_button id=%d_cell>%s</span><br><span id=%d_celldata>%s - %d</span>",
+                            $cell->id,
+                            $cell->tname,
+                            $cell->id,
+                            $cell->pname,
+                            $cell->armies);
     $line .= div($content,array("class"=>"map_cell continent_{$cell->id_continent}","id"=>$cell->id . "_terr"));
     $last_x = $cell->map_x;
 }
@@ -59,12 +75,16 @@ echo div($line);
     <label for=terr_id>ID</label><input id="terr_id" size=4 readonly=readonly>
 </div>
 <div class=the_line>
-    <label for=player_id>Player</label><input id="player_id" size=4 >
+    <label for=player_id>Player</label>
+    <?php
+        echo form_dropdown("player_id", $players,0,array("id"=>"player_id"));
+        //print_r($players);
+    ?>
 </div>
 <div class=the_line>
     <label for=armies>Armies</label><input id="armies" size=4 >
 </div>
 <div style="padding:4px">
-<button type=button id=terr_form_hide>Hide</button>
+<button type=button id=terr_form_hide>Hide</button><button type=button id=terr_form_save>Save</button>
 </div>
 </div>

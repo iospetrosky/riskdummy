@@ -15,7 +15,11 @@ class Map extends CI_Controller {
         $data["css"] = array("map");
         $this->load->view('intro',$data);
         $data["cells"] = $this->map_model->map_info(get_cookie("current_game"));
-        $data["players"] = $this->sets_model->userlist($id_game); // convert to an array to be used in a select list
+        $res = $this->sets_model->userlist(get_cookie("current_game")); 
+        $data["players"] = array();
+        foreach($res as $r) {
+            $data["players"][$r->id] = $r->pname;
+        }
         $this->load->view('map_form',$data);
 	}
     
@@ -28,5 +32,15 @@ class Map extends CI_Controller {
         $res = $this->sets_model->userlist($id_game);
         echo json_encode($res);
     }
+    
+    public function saveterritory() {
+        $res = $this->map_model->save_territory(
+                    $this->input->post("id"),
+                    $this->input->post("player"),
+                    $this->input->post("armies"));
+        echo json_encode($res);
+    }
+    
+    
 }
     

@@ -31,6 +31,6 @@ class Sets_model extends CI_Model {
     
     public function userlist($id_game) {
         return $this->db->select("*")->from("players")
-                        ->where("id_game",$id_game)->get()->result()[0];
+                        ->where("id_game",$id_game)->get()->result();
     }
 }

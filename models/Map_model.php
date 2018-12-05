@@ -18,5 +18,20 @@ class Map_model extends CI_Model {
         $query = $this->db->query($sql);
         return $query->result();
     }
+    
+    public function save_territory($id,$player,$armies) {
+        $this->db->set("id_player",$player)
+                 ->set("armies",$armies)
+                 ->where("id",$id)
+                 ->update("player_territory");
+        // now also update the stats in the players table (num_territories and num_armies)         
+         
+        $sql = "select pt.id, pt.id_player, pt.armies, p.pname 
+                    from player_territory pt
+                    inner join players p on pt.id_player=p.id
+                    where pt.id = $id";
+        return $this->db->query($sql)->result()[0];
+    }
+    
 }
     
