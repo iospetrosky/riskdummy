@@ -73,40 +73,39 @@ class Game_model extends CI_Model {
     
     public function dummy_first_army_placement($id_game) {
         // there may be more than one dummy so the act in turn
-        // alter table games add dummy_placed int(1) default 0
-        
         // dummies look for easy shots
         $dummies = $this->db->query("select id, num_territories, num_armies from players where ptype='D' and id_game = $id_game")
                             ->get()->result();
         $max_armies = 34; // this depends from the number of players... see the rules
         $this->db->trans_begin();
-        do {
+        //do {
             foreach($dummies as &$dummy) {
                 if ($dummy->armies < $max_armies) {
-                    //look for an easy shot
+                    //look for a potentially easy shot and reinforce nearby
+                    $easy = $this->find_easy_shots($id_game, $dummy->id, 2, 1);
+                    foreach($easy as $shot) {
+                        if ($shot->arm_dest == 1) {
+                            if (($left_armies = $max_armies - $dummy->num_armies) > 0) {
+                                if ($left_armies >= 2) {
+                                    $dummy->armies += 2;
+                                    $this->db->set("")
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        }
-        select o.id, o.id_player,o.id_territory,o.armies,
-                origin, destination,
-                d.id, d.id_player,d.id_territory,d.armies
-        from player_territory o
-            inner join v_attack_lines al on o.id_territory = al.origin
-            inner join player_territory d on al.destination = d.id_territory
-            where o.id_game = 8 and d.id_game = 8
-        
-        
+        //}
     }
     
-    protected function find_easy_shot($id_game, $id_player, $max_armies = 4) {
-        $sql = "select o.id, o.id_player,o.id_territory,o.armies,
-                origin, destination,
-                d.id, d.id_player,d.id_territory,d.armies
+    protected function find_easy_shots($id_game, $id_player, $enemy_max_armies = 2, $own_min_armi = 3) {
+        $sql = "select o.id,o.armies arm_orig,origin,destination,d.id_player as id_enemy,d.armies as arm_dest
                     from player_territory o
                         inner join v_attack_lines al on o.id_territory = al.origin
                         inner join player_territory d on al.destination = d.id_territory
                         where o.id_game = $id_game and d.id_game = $id_game 
-                                and o.id_player = $id_player and o.armies < $max_armies
+                                and o.id_player = $id_player and d.armies <= $enemy_max_armies
+                                and o.armies >= $own_min_armi
                         order by d.armies asc";
         
     }

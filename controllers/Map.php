@@ -37,7 +37,8 @@ class Map extends CI_Controller {
         $res = $this->map_model->save_territory(
                     $this->input->post("id"),
                     $this->input->post("player"),
-                    $this->input->post("armies"));
+                    $this->input->post("armies"),
+                    get_cookie("current_game"));
         echo json_encode($res);
     }
     
