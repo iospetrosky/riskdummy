@@ -54,6 +54,14 @@ if ( ! function_exists('div')) {
     }
     
 }
+
+if ( ! function_exists('label')) {
+
+    function label($content, $attrib = false) {
+        return htag('LABEL',$content,$attrib);
+    }
+    
+}
 /*
 if ( ! function_exists('table')) {
 

@@ -70,7 +70,7 @@ class Game_model extends CI_Model {
         $this->db->trans_commit();
         return $id_game;
     }
-    
+    /*
     public function dummy_first_army_placement($id_game) {
         // there may be more than one dummy so the act in turn
         // dummies look for easy shots
@@ -97,18 +97,74 @@ class Game_model extends CI_Model {
             }
         //}
     }
+    */
     
-    protected function find_easy_shots($id_game, $id_player, $enemy_max_armies = 2, $own_min_armi = 3) {
-        $sql = "select o.id,o.armies arm_orig,origin,destination,d.id_player as id_enemy,d.armies as arm_dest
+    protected function find_easy_attacks($id_game, $id_player) {
+        // returns a list of possible attacks ordered by the ratio between own and enemy armies
+        $sql = "select o.id_player as id_attacker, o.id as oid, d.id as did, o.armies army_attacker, origin, destination,
+                    d.id_player as id_defender,d.armies as army_defender,
+                    (o.armies*1.0)/d.armies as ratio
                     from player_territory o
                         inner join v_attack_lines al on o.id_territory = al.origin
                         inner join player_territory d on al.destination = d.id_territory
                         where o.id_game = $id_game and d.id_game = $id_game 
-                                and o.id_player = $id_player and d.armies <= $enemy_max_armies
-                                and o.armies >= $own_min_armi
-                        order by d.armies asc";
-        
+                                and o.id_player = $id_player and d.id_player <> $id_player
+                        order by 9 desc";
+        return $this->db->query($sql)->result();
     }
+    public function start_attack($id_player, $id_game) {
+        //the player identifies an easy shot and performs also the necessary dice rolls
+        $easy = $this->find_easy_attacks($id_game, $id_player)[0];
+        //add some cosmetic info
+        //name of territories
+        $easy->origin_name = $this->db->select("tname")
+                                        ->from("territories")
+                                        ->where("id",$easy->origin)
+                                        ->get()->result()[0]->tname;
+        $easy->dest_name = $this->db->select("tname")
+                                        ->from("territories")
+                                        ->where("id",$easy->destination)
+                                        ->get()->result()[0]->tname;
+        //name of the players
+        $easy->attacker_name = $this->db->select("pname")
+                                        ->from("players")
+                                        ->where("id",$easy->id_attacker)
+                                        ->get()->result()[0]->pname;
+        $easy->defender_name = $this->db->select("pname")
+                                        ->from("players")
+                                        ->where("id",$easy->id_defender)
+                                        ->get()->result()[0]->pname;
+        return $easy;
+    }
+    
+    public function finalize_attack($oid, $att_id, $att_loss, $att_with, $did, $def_id, $def_loss , $conquer = false) {
+        //takes the result of an attack , remove lost armies and exchange of territories
+        //oid / did are ID in the table player_territory
+        //att_with = how many armies in the attack?
+        //att/def_loss = how many armies were lost?
+        //att/def_id = the id of the player
+        $this->db->trans_begin();
+        $sql = "update player_territory set armies = armies - ? where id = ?";
+        $this->db->query($sql,array($att_loss,$oid));
+        $this->db->query($sql,array($def_loss,$did));
+        
+        $sql = "update players set num_armies = num_armies - ? where id = ?";
+        $this->db->query($sql,array($att_loss,$att_id));
+        $this->db->query($sql,array($def_loss,$def_id));
+        
+        // is the territory conquered?
+        if ($conquer) {
+            $this->db->query("update players set num_territories = num_territories + 1 where id = $att_id");
+            $this->db->query("update players set num_territories = num_territories - 1 where id = $def_id");
+            //move the victorious armies into the territory
+            $this->db->query("update player_territory set id_player = ?, armies = ? where id = ?", 
+                               array($att_id, $att_with-$att_loss, $did)  );
+            $this->db->query("update player_territory set armies = armies - ? where id = ?",
+                             array($att_with-$att_loss, $oid) );
+        }
+        $this->db->trans_commit();
+    }
+    
     
     
     public function get_player_territories($id) {

@@ -5,8 +5,15 @@ $ajax = $bu . "/xxx/";
 <script type='text/javascript'>
 var base_url = "<?php echo $bu; ?>"
 var ajax_url = "<?php echo $ajax; ?>" 
-
-
+/*
+function submit_attack() {
+    $.post(base_url + "/game/submitattack" ,
+                $('form#cmb_mainform').serialize(),
+                function(data) {
+                    
+                })
+}
+*/
 function run_local() {
     $("#cmd_delete").mouseup(function(e) {
         window.location.href = base_url + "/game/delgame"
@@ -27,9 +34,18 @@ function run_local() {
         
     })
     $(".editable").change(function(e) {
-        //var id = $(this).attr("ID").split("_")[1]
+        //var id = $(this).attr("ID").split("_")[0]
         $(this).addClass("row_edited")
     })
+    $(".btn_attack").click(function(e) {
+        id = $(this).attr("ID").split("_")[0]
+        $.get(base_url + "/game/startattack/"+id, function(data) {
+            $("#ACTIONS").html(data)
+        } )
+    })
+    $("input").on("click", function(e){
+        $(this).select()
+    } )
 
             
 } // run_local    
@@ -45,7 +61,8 @@ echo div(
     div("",array("class"=>"head_display_cell","style"=>"width:20px")) .
     div("Color",array("class"=>"head_display_cell","style"=>"width:90px")) .
     div("Ter",array("class"=>"head_display_cell","style"=>"width:50px")) .
-    div("Army",array("class"=>"head_display_cell","style"=>"width:50px")) 
+    div("Army",array("class"=>"head_display_cell","style"=>"width:50px")) .
+    div("&nbsp;",array("class"=>"head_display_cell","style"=>"width:200px"))
 );
 
 foreach($game->players as $pl) {
@@ -61,7 +78,11 @@ foreach($game->players as $pl) {
         div($pl->ptype,array("class"=>"row_edit_cell","style"=>"width:20px")) .
         div(form_input($data), array("class"=>"row_edit_cell","style"=>"width:90px")) .
         div($pl->num_territories,array("class"=>"row_edit_cell","style"=>"width:50px")) .
-        div($pl->num_armies,array("class"=>"row_edit_cell","style"=>"width:50px")) 
+        div($pl->num_armies,array("class"=>"row_edit_cell","style"=>"width:50px")) .
+        ($pl->ptype == 'D'?div(button("My turn",array("id" => $pl->id . "_btn_myturn")) . 
+                               button("Attack",array("id" => $pl->id . "_btn_attack", "class" => "btn_attack")),
+                                array("class"=>"row_edit_cell","style"=>"width:200px")):"") 
+        
     );
 }
 
@@ -72,6 +93,15 @@ echo div(
     div(button("Save colors",array("id"=>"cmd_savecolors")), 
             array("class"=>"row_edit_cell","style"=>"width:90px")) .
     div("",array("class"=>"row_edit_cell","style"=>"width:50px")) .
-    div("",array("class"=>"row_edit_cell","style"=>"width:50px")) 
+    div("",array("class"=>"row_edit_cell","style"=>"width:50px")) .
+    div("",array("class"=>"row_edit_cell","style"=>"width:200px")) 
 );
 ?>
+<div id="ACTIONS">
+
+</div>
+
+
+
+
+

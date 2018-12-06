@@ -29,7 +29,7 @@ function run_local() {
                      function(data) {
                         $("#terr_form").css("visibility","hidden")
                         data = JSON.parse(data)
-                        $("#"+data.id+"_celldata").html(data.pname + " - " + data.armies)
+                        $("#"+data.id+"_celldata").html("<b>" + data.pname + "</b> - " + data.armies)
                      } )
         
     })
@@ -54,17 +54,18 @@ foreach($cells as $cell) {
         //ocean cells
         for($x=$last_x+1; $x<$cell->map_x; $x++) {
             //$content = sprintf("%s<br>Y:%s X:%s","ocean", $cell->map_y, $x);
-            $line .= div("",array("class"=>"map_cell ocean"));
+            $line .= div("",array("class"=>"map_cell oc__ean"));
         }
     }
     //$content = sprintf("%s<br>Y:%s X:%s",$cell->tname, $cell->map_y, $cell->map_x);
-    $content = sprintf("<span class=terr_button id=%d_cell>%s</span><br><span id=%d_celldata>%s - %d</span>",
+    $content = sprintf("<span class=terr_button id=%d_cell>%s</span><br><span id=%d_celldata style='color:%s'><b>%s</b> - %d</span>",
                             $cell->id,
                             $cell->tname,
                             $cell->id,
+                            $cell->pcolor,
                             $cell->pname,
                             $cell->armies);
-    $line .= div($content,array("class"=>"map_cell continent_{$cell->id_continent}","id"=>$cell->id . "_terr"));
+    $line .= div($content,array("class"=>"map_cell con__tinent_{$cell->id_continent}","id"=>$cell->id . "_terr"));
     $last_x = $cell->map_x;
 }
 echo div($line);
