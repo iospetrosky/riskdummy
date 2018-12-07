@@ -37,7 +37,7 @@ function run_local() {
 } // run_local    
     
 </script>
-
+<div style="" id="map_border">
 <?php
 $line = "";
 $last_y = 1;
@@ -45,6 +45,13 @@ $last_x = 0;
 $content = "";
 foreach($cells as $cell) {
     if ($cell->map_y != $last_y) {
+        if ($last_x < 10) {
+            // there are be some ocean cells on the right
+            for ($x=$last_x+1; $x<=10; $x++) {
+                $line .= div("",array("class"=>"map_cell ocean"));
+            }
+        }
+        
         echo div($line);
         $line = "";
         $last_y = $cell->map_y;
@@ -54,7 +61,7 @@ foreach($cells as $cell) {
         //ocean cells
         for($x=$last_x+1; $x<$cell->map_x; $x++) {
             //$content = sprintf("%s<br>Y:%s X:%s","ocean", $cell->map_y, $x);
-            $line .= div("",array("class"=>"map_cell oc__ean"));
+            $line .= div("",array("class"=>"map_cell ocean"));
         }
     }
     //$content = sprintf("%s<br>Y:%s X:%s",$cell->tname, $cell->map_y, $cell->map_x);
@@ -65,12 +72,18 @@ foreach($cells as $cell) {
                             $cell->pcolor,
                             $cell->pname,
                             $cell->armies);
-    $line .= div($content,array("class"=>"map_cell con__tinent_{$cell->id_continent}","id"=>$cell->id . "_terr"));
+    $line .= div($content,array("class"=>"map_cell continent_{$cell->id_continent}","id"=>$cell->id . "_terr"));
     $last_x = $cell->map_x;
 }
+if ($last_x < 10) {
+    // there are be some ocean cells on the right
+    for ($x=$last_x+1; $x<=10; $x++) {
+        $line .= div("",array("class"=>"map_cell ocean"));
+    }
+}
 echo div($line);
-
 ?>  
+</div>
 <div class=the_form id=terr_form style="visibility:hidden">
 <div class=the_line>
     <label for=terr_id>ID</label><input id="terr_id" size=4 readonly=readonly>

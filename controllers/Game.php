@@ -73,6 +73,13 @@ class Game extends CI_Controller {
             $this->input->post("invasion")
         );
         header("Location: " . config_item('base_url') . '/' . config_item('index_page') . "/play/map");
+        die();
+    }
+    
+    public function myturn($id_player) {
+        $this->game_model->dummy_first_army_placement(9);
+        header("Location: " . config_item('base_url') . '/' . config_item('index_page') . "/play/map");
+        die();
     }
     
     public function startattack($id_player) {
@@ -141,10 +148,6 @@ class Game extends CI_Controller {
         $form .= form_close();
         
         echo $form;
-        /*
-        echo "<pre>";
-        print_r($res);
-        echo "</pre>";*/
     }
     
 }

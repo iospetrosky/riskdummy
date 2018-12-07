@@ -43,6 +43,13 @@ function run_local() {
             $("#ACTIONS").html(data)
         } )
     })
+    $(".btn_myturn").click(function(e) {
+        id = $(this).attr("ID").split("_")[0]
+        $.get(base_url + "/game/myturn/"+id, function(data) {
+            $("#ACTIONS").html(data)
+        } )
+    })
+    
     $("input").on("click", function(e){
         $(this).select()
     } )
@@ -79,7 +86,7 @@ foreach($game->players as $pl) {
         div(form_input($data), array("class"=>"row_edit_cell","style"=>"width:90px")) .
         div($pl->num_territories,array("class"=>"row_edit_cell","style"=>"width:50px")) .
         div($pl->num_armies,array("class"=>"row_edit_cell","style"=>"width:50px")) .
-        ($pl->ptype == 'D'?div(button("My turn",array("id" => $pl->id . "_btn_myturn")) . 
+        ($pl->ptype == 'D'?div(button("My turn",array("id" => $pl->id . "_btn_myturn", "class" => "btn_myturn")) . 
                                button("Attack",array("id" => $pl->id . "_btn_attack", "class" => "btn_attack")),
                                 array("class"=>"row_edit_cell","style"=>"width:200px")):"") 
         

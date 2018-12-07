@@ -49,3 +49,9 @@
     margin-bottom: 4px;
     height: 20%;
 }
+
+#map_border {
+    width: 1200px;
+    margin-top: 7px;
+    border: 1px solid green;
+}

@@ -70,34 +70,55 @@ class Game_model extends CI_Model {
         $this->db->trans_commit();
         return $id_game;
     }
-    /*
+    
     public function dummy_first_army_placement($id_game) {
         // there may be more than one dummy so the act in turn
         // dummies look for easy shots
-        $dummies = $this->db->query("select id, num_territories, num_armies from players where ptype='D' and id_game = $id_game")
-                            ->get()->result();
-        $max_armies = 34; // this depends from the number of players... see the rules
+        $dummies = $this->db->query("select id, num_territories, num_armies from players where ptype='D' and id_game = $id_game")->result();
+        $max_armies = 30; // this depends from the number of players... see the rules
         $this->db->trans_begin();
-        //do {
+        do {
+            // loop goes on until there is at least one dummy with armies
+            $next_loop = false;
             foreach($dummies as &$dummy) {
-                if ($dummy->armies < $max_armies) {
+                if ($dummy->num_armies < $max_armies) {
+                    $next_loop = true;
                     //look for a potentially easy shot and reinforce nearby
-                    $easy = $this->find_easy_shots($id_game, $dummy->id, 2, 1);
+                    $easy = $this->find_weak_territories($id_game, $dummy->id);
                     foreach($easy as $shot) {
-                        if ($shot->arm_dest == 1) {
-                            if (($left_armies = $max_armies - $dummy->num_armies) > 0) {
-                                if ($left_armies >= 2) {
-                                    $dummy->armies += 2;
-                                    $this->db->set("")
-                                }
-                            }
+                        //try to put 3 armies more than the defender
+                        $put_armies = $shot->army_defender - $shot->army_attacker + 3;
+                        //armies available 
+                        if (($left_armies = $max_armies - $dummy->num_armies) > 0) {
+                            if ($left_armies < $put_armies) $put_armies = $left_armies;
+                            $dummy->num_armies += $put_armies;
+                            $this->db->query("update player_territory set armies = armies + ? where id = ?",array($put_armies, $shot->oid));
+                            break;
                         }
                     }
                 }
             }
-        //}
+        } while($next_loop);
+        foreach($dummies as $dummy) {
+            $this->db->set($dummy)
+                        ->where("id",$dummy->id)
+                        ->update("players");
+        }
+        $this->db->trans_commit();
     }
-    */
+
+    protected function find_weak_territories($id_game, $id_player) {
+        //returns a list of confining territories ordered by number of armies
+        $sql = "select o.id_player as id_attacker, o.id as oid, d.id as did, o.armies army_attacker, origin, destination,
+                    d.id_player as id_defender,d.armies as army_defender
+                    from player_territory o
+                        inner join v_attack_lines al on o.id_territory = al.origin
+                        inner join player_territory d on al.destination = d.id_territory
+                        where o.id_game = $id_game and d.id_game = $id_game 
+                                and o.id_player = $id_player and d.id_player <> $id_player
+                            order by d.armies asc";
+        return $this->db->query($sql)->result();
+    }
     
     protected function find_easy_attacks($id_game, $id_player) {
         // returns a list of possible attacks ordered by the ratio between own and enemy armies
