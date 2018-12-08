@@ -41,6 +41,7 @@ if ($list) {
     $columns = array (
         array("ID", 50, "RO"),
         array("Name", 200),
+        array("Bonus", 50),
         array("", 100)
     );
     $inner = "";

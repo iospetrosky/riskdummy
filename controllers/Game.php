@@ -76,10 +76,18 @@ class Game extends CI_Controller {
         die();
     }
     
-    public function myturn($id_player) {
-        $this->game_model->dummy_first_army_placement(9);
-        header("Location: " . config_item('base_url') . '/' . config_item('index_page') . "/play/map");
-        die();
+    public function reinforce($id_player) {
+        $res = $this->game_model->dummy_place_bonus_armies($id_player);
+        echo json_encode($res);
+    }
+    public function dummyfirst() {
+        $res = $this->game_model->dummy_first_army_placement(get_cookie("current_game"));
+        if($res) {
+            header("Location: " . config_item('base_url') . '/' . config_item('index_page') . "/play/map");
+            die();
+        } else {
+            echo "Dummies already placed!";
+        }
     }
     
     public function startattack($id_player) {
@@ -151,4 +159,4 @@ class Game extends CI_Controller {
     }
     
 }
-    
+// alter table continents add bonus_armies int(1) default 0;   

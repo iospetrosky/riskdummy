@@ -71,10 +71,66 @@ class Game_model extends CI_Model {
         return $id_game;
     }
     
+    public function get_bonus_armies($id_player) {
+        // 1 army every 3 territories
+        // armies for full continents
+        // armies from cards 
+
+        $armies = (int)$this->db->select("(num_territories / 3) as armies")
+                           ->from("players")
+                           ->where("id",$id_player)
+                           ->get()->result()[0]->armies;
+
+        return $armies;
+    }
+
+    public function dummy_place_bonus_armies($id_player) {
+        $dummy = $this->db->select("id, num_armies, pname, id_game")
+                          ->from("players")
+                          ->where("id",$id_player)
+                          ->get()->result()[0];
+        $armies = $this->get_bonus_armies($id_player);
+        $this->db->trans_begin();
+        $ret = new stdClass();
+        $ret->message = "Assigned $armies armies to {$dummy->pname}";
+        $ret->id = $id_player;
+
+        $ret->max_armies = $armies + $dummy->num_armies;
+        $ret->places = array(); // list of army assignments
+        do {
+            $next_loop = false;
+            if ($dummy->num_armies < $ret->max_armies) {
+                $next_loop = true;
+                //look for a potentially easy shot and reinforce nearby
+                $shot = $this->find_weak_territories($dummy->id_game, $dummy->id)[0];
+                //try to put 3 armies more than the defender
+                $put_armies = $shot->army_defender - $shot->army_attacker + 3;
+                //armies available 
+                if (($left_armies = $ret->max_armies - $dummy->num_armies) > 0) {
+                    if ($left_armies < $put_armies) $put_armies = $left_armies;
+                    $dummy->num_armies += $put_armies;
+                    $this->db->query("update player_territory set armies = armies + ? where id = ?",array($put_armies, $shot->oid));
+                    $orig_name = $this->db->select("tname")->from("territories")
+                                      ->where("id",$shot->origin)->get()->result()[0]->tname;
+                    $ret->places[] = "$put_armies positioned on {$orig_name}";
+                }
+            }
+        } while($next_loop);
+        // update the dummy
+        unset($dummy->id_game); unset($dummy->pname);
+        $this->db->set($dummy)
+            ->where("id",$dummy->id)
+            ->update("players");
+            
+        $this->db->trans_commit();
+        return $ret;
+    }
+
+
     public function dummy_first_army_placement($id_game) {
         // there may be more than one dummy so the act in turn
         // dummies look for easy shots
-        $dummies = $this->db->query("select id, num_territories, num_armies from players where ptype='D' and id_game = $id_game")->result();
+        $dummies = $this->db->query("select id, num_territories, num_armies, pname from players where ptype='D' and id_game = $id_game")->result();
         $max_armies = 30; // this depends from the number of players... see the rules
         $this->db->trans_begin();
         do {
@@ -84,17 +140,14 @@ class Game_model extends CI_Model {
                 if ($dummy->num_armies < $max_armies) {
                     $next_loop = true;
                     //look for a potentially easy shot and reinforce nearby
-                    $easy = $this->find_weak_territories($id_game, $dummy->id);
-                    foreach($easy as $shot) {
-                        //try to put 3 armies more than the defender
-                        $put_armies = $shot->army_defender - $shot->army_attacker + 3;
-                        //armies available 
-                        if (($left_armies = $max_armies - $dummy->num_armies) > 0) {
-                            if ($left_armies < $put_armies) $put_armies = $left_armies;
-                            $dummy->num_armies += $put_armies;
-                            $this->db->query("update player_territory set armies = armies + ? where id = ?",array($put_armies, $shot->oid));
-                            break;
-                        }
+                    $shot = $this->find_weak_territories($id_game, $dummy->id)[0];
+                    //try to put 3 armies more than the defender
+                    $put_armies = $shot->army_defender - $shot->army_attacker + 3;
+                    //armies available 
+                    if (($left_armies = $max_armies - $dummy->num_armies) > 0) {
+                        if ($left_armies < $put_armies) $put_armies = $left_armies;
+                        $dummy->num_armies += $put_armies;
+                        $this->db->query("update player_territory set armies = armies + ? where id = ?",array($put_armies, $shot->oid));
                     }
                 }
             }
@@ -104,6 +157,10 @@ class Game_model extends CI_Model {
                         ->where("id",$dummy->id)
                         ->update("players");
         }
+        $this->db->set("dummy_placed",1)
+                 ->where("id",$id_game)
+                 ->update("games");
+
         $this->db->trans_commit();
     }
 
@@ -116,7 +173,7 @@ class Game_model extends CI_Model {
                         inner join player_territory d on al.destination = d.id_territory
                         where o.id_game = $id_game and d.id_game = $id_game 
                                 and o.id_player = $id_player and d.id_player <> $id_player
-                            order by d.armies asc";
+                            order by o.armies asc, d.armies asc";
         return $this->db->query($sql)->result();
     }
     
