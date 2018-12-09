@@ -80,8 +80,22 @@ class Game_model extends CI_Model {
                            ->from("players")
                            ->where("id",$id_player)
                            ->get()->result()[0]->armies;
+        // check if the player has a full continent
+        $sql = "select count(pt.id_player) as player_territories, c.id, c.num_territories, c.bonus_armies
+                from player_territory pt
+                inner join territories t on pt.id_territory=t.id
+                inner join continents c on t.id_continent = c.id
+                where pt.id_player = $id_player
+                group by c.id, c.num_territories, c.bonus_armies
+                order by 2 asc";
+        $stats = $this->db->query($sql)->result();
+        foreach($stats as $st) {
+            if ($st->player_territories == $st->num_territories) {
+                $armies += $st->bonus_armies;
+            }
+        }
 
-        return $armies;
+        return $armies+10;
     }
 
     public function dummy_place_bonus_armies($id_player) {
@@ -90,21 +104,28 @@ class Game_model extends CI_Model {
                           ->where("id",$id_player)
                           ->get()->result()[0];
         $armies = $this->get_bonus_armies($id_player);
+        echo "<pre>";
+        echo $armies; 
         $this->db->trans_begin();
         $ret = new stdClass();
         $ret->message = "Assigned $armies armies to {$dummy->pname}";
         $ret->id = $id_player;
 
+        $k = 0;
+
         $ret->max_armies = $armies + $dummy->num_armies;
         $ret->places = array(); // list of army assignments
         do {
             $next_loop = false;
+            $k++; if ($k >8) die("azzo");            
             if ($dummy->num_armies < $ret->max_armies) {
                 $next_loop = true;
                 //look for a potentially easy shot and reinforce nearby
                 $shot = $this->find_weak_territories($dummy->id_game, $dummy->id)[0];
+                print_r($shot); 
                 //try to put 3 armies more than the defender
                 $put_armies = $shot->army_defender - $shot->army_attacker + 3;
+                if ($put_armies == 0) $put_armies = 1;
                 //armies available 
                 if (($left_armies = $ret->max_armies - $dummy->num_armies) > 0) {
                     if ($left_armies < $put_armies) $put_armies = $left_armies;
@@ -113,6 +134,7 @@ class Game_model extends CI_Model {
                     $orig_name = $this->db->select("tname")->from("territories")
                                       ->where("id",$shot->origin)->get()->result()[0]->tname;
                     $ret->places[] = "$put_armies positioned on {$orig_name}";
+                    print_r($ret); 
                 }
             }
         } while($next_loop);
@@ -122,7 +144,7 @@ class Game_model extends CI_Model {
             ->where("id",$dummy->id)
             ->update("players");
             
-        $this->db->trans_commit();
+        //$this->db->trans_commit();
         return $ret;
     }
 
@@ -131,11 +153,10 @@ class Game_model extends CI_Model {
         // there may be more than one dummy so the act in turn
         // dummies look for easy shots
         $dummies = $this->db->query("select id, num_territories, num_armies, pname from players where ptype='D' and id_game = $id_game")->result();
-        $max_armies = 30; // this depends from the number of players... see the rules
+        $max_armies = 35; // this depends from the number of players... see the rules
         $this->db->trans_begin();
         do {
             // loop goes on until there is at least one dummy with armies
-            $next_loop = false;
             foreach($dummies as &$dummy) {
                 if ($dummy->num_armies < $max_armies) {
                     $next_loop = true;
@@ -173,7 +194,8 @@ class Game_model extends CI_Model {
                         inner join player_territory d on al.destination = d.id_territory
                         where o.id_game = $id_game and d.id_game = $id_game 
                                 and o.id_player = $id_player and d.id_player <> $id_player
-                            order by o.armies asc, d.armies asc";
+                            order by d.armies asc, o.armies asc";
+        //echo $sql;
         return $this->db->query($sql)->result();
     }
     
@@ -215,12 +237,17 @@ class Game_model extends CI_Model {
         return $easy;
     }
     
-    public function finalize_attack($oid, $att_id, $att_loss, $att_with, $did, $def_id, $def_loss , $conquer = false) {
+    public function finalize_attack($oid, $att_id, $att_loss, $att_with, $did, $def_id, $def_loss) {
         //takes the result of an attack , remove lost armies and exchange of territories
         //oid / did are ID in the table player_territory
         //att_with = how many armies in the attack?
         //att/def_loss = how many armies were lost?
         //att/def_id = the id of the player
+        $conquer = false;
+        $defender_armies = $this->db->select("armies")->from("player_territory")
+                                    ->where("id",$did)->get()->result()[0]->armies;
+        if (($defender_armies - $def_loss) <= 0) $conquer = true;
+
         $this->db->trans_begin();
         $sql = "update player_territory set armies = armies - ? where id = ?";
         $this->db->query($sql,array($att_loss,$oid));

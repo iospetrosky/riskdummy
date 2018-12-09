@@ -10,7 +10,7 @@ class Sets_model extends CI_Model {
     }
     
     public function continent_list() {
-        $query = $this->db->select("id, cname, bonus_armies")
+        $query = $this->db->select("id, cname, num_territories, bonus_armies")
                           ->from('continents')
                           ->order_by("id asc")
                           ->get();    

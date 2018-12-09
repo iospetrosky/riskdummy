@@ -5,15 +5,7 @@ $ajax = $bu . "/xxx/";
 <script type='text/javascript'>
 var base_url = "<?php echo $bu; ?>"
 var ajax_url = "<?php echo $ajax; ?>" 
-/*
-function submit_attack() {
-    $.post(base_url + "/game/submitattack" ,
-                $('form#cmb_mainform').serialize(),
-                function(data) {
-                    
-                })
-}
-*/
+
 function run_local() {
     $.ajaxSetup({ cache: false });
 
@@ -64,12 +56,19 @@ function run_local() {
             $("#ACTIONS").html(data)
         } )
     })
-    
-    $("input").on("click", function(e){
+    $("#ACTIONS").on("click", ".dice_roll", function(e) {
+        $.get(base_url + "/game/roll/"+$(this).attr("ID"), function(data) {
+            data = JSON.parse(data)
+            $("#" + data.id ).html(data.roll)
+        } )
+    }).on("click","input",function(e){
+        //this is for the dynamically created items
+        $(this).select()
+    })
+    $("input").on("click",function(e){
+        //this is for the others
         $(this).select()
     } )
-
-            
 } // run_local    
     
 </script>
@@ -123,8 +122,3 @@ echo div(
 <div id="ACTIONS">
 
 </div>
-
-
-
-
-

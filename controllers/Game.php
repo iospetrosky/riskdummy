@@ -69,8 +69,8 @@ class Game extends CI_Controller {
             (int)$this->input->post("attack_with"),
             $this->input->post("did"),
             $this->input->post("id_defender"),
-            (int)$this->input->post("defense_loss"),
-            $this->input->post("invasion")
+            (int)$this->input->post("defense_loss")
+            //$this->input->post("invasion")
         );
         header("Location: " . config_item('base_url') . '/' . config_item('index_page') . "/play/map");
         die();
@@ -89,14 +89,17 @@ class Game extends CI_Controller {
             echo "Dummies already placed!";
         }
     }
+
+    public function roll($dice_id) {
+        $ret = new stdClass();
+        $ret->id = $dice_id;
+        $ret->roll = rand(1,6);
+        echo json_encode($ret);
+    }
     
     public function startattack($id_player) {
         $res = $this->game_model->start_attack($id_player, get_cookie("current_game"));
         //now the game part... throw dice etc.
-        $res->dice_attack = array();
-        for ($d=0;$d<$res->army_attacker-1;$d++) {
-            array_push($res->dice_attack, rand(1,6));
-        }
         //return the form to manage the attack
         $form = form_open(config_item('base_url') . '/' . config_item('index_page') . '/game/finalizeattack', "", array(
                                 "id_attacker" => $res->id_attacker,
@@ -107,24 +110,29 @@ class Game extends CI_Controller {
                                 "id_destination" => $res->destination
                     ));
         $form .= div(
-                    div($res->attacker_name, array("class"=>"cmb_cell")) .
-                    div($res->defender_name, array("class"=>"cmb_cell")) 
-                    , array("class"=>"cmb_line")
+                    div($res->attacker_name, array("class"=>"cmb_cell cmb_info")) .
+                    div($res->defender_name, array("class"=>"cmb_cell cmb_info")) 
+                    , array("class"=>"cmb_line","style"=>"border-top:4px solid black")
                 );
         $form .= div(
-                    div($res->origin_name, array("class"=>"cmb_cell")) .
-                    div($res->dest_name, array("class"=>"cmb_cell")) 
+                    div($res->origin_name, array("class"=>"cmb_cell cmb_info")) .
+                    div($res->dest_name, array("class"=>"cmb_cell cmb_info")) 
                     , array("class"=>"cmb_line")
                 );
         
-        $attack_rolls = "";
-        foreach($res->dice_attack as $dice) {
-            $attack_rolls .= div($dice, array("class"=>"dice_roll") );
+        $attack_rolls_a = "";
+        $attack_rolls_b = "";
+        for ($d=10;$d<$res->army_attacker-1+10;$d++) {
+            $attack_rolls_a .= div("0", array("class"=>"dice_roll","id"=>"{$d}_dice","style"=>"border-color:red") );
+        }
+        for ($d=20;$d<$res->army_defender+20;$d++) {
+            $attack_rolls_b .= div("0", array("class"=>"dice_roll","id"=>"{$d}_dice","style"=>"border-color:green") );
         }
         
         $form .= div(
-                    $attack_rolls,
-                    array("class"=>"cmb_line")
+                    div($attack_rolls_a, array("class"=>"cmb_cell")) .
+                    div($attack_rolls_b, array("class"=>"cmb_cell")),
+                    array("class"=>"cmb_line","style"=>"height:60px")
                 );
         
         $form .= div(
@@ -139,15 +147,10 @@ class Game extends CI_Controller {
                     );
         $form .= div(
                     form_label("Defender losses", "def_loss")  .
-                    form_input("defense_loss", 0,"id=def_loss size=2")
-                    ,array("class"=>"cmb_line")
+                    form_input("defense_loss", 0,"id=def_loss size=2") .
+                    span(" (of {$res->army_defender})"),
+                    array("class"=>"cmb_line") 
                     );
-        $form .= div(
-                    form_label("Invasion","invasion")  .
-                    form_checkbox("invasion", 1,false, "id=invasion")
-                    ,array("class"=>"cmb_line")
-                    );
-                    
         $form .= div(
                     form_submit("att_save", "Save")
                     ,array("class"=>"cmb_line")
@@ -159,4 +162,5 @@ class Game extends CI_Controller {
     }
     
 }
-// alter table continents add bonus_armies int(1) default 0;   
+// alter table continents add bonus_armies int(1) default 0; 
+// alter table continents add num_territories int(2) default 0;  
