@@ -77,11 +77,13 @@ class Game_model extends CI_Model {
         // 1 army every 3 territories
         // armies for full continents
         // armies from cards 
-
-        $armies = (int)$this->db->select("(num_territories / 3) as armies")
+        $ret = new stdClass();
+        
+        $ret->armies = (int)$this->db->select("(num_territories / 3) as armies")
                            ->from("players")
                            ->where("id",$id_player)
                            ->get()->result()[0]->armies;
+        $ret->standard = "Assigned {$ret->armies} for the territories";
         // check if the player has a full continent
         $sql = "select count(pt.id_player) as player_territories, c.id, c.num_territories, c.bonus_armies
                 from player_territory pt
@@ -91,11 +93,14 @@ class Game_model extends CI_Model {
                 group by c.id, c.num_territories, c.bonus_armies
                 order by 2 asc";
         $stats = $this->db->query($sql)->result();
+        $ret->continents = 0;
         foreach($stats as $st) {
             if ($st->player_territories == $st->num_territories) {
-                $armies += $st->bonus_armies;
+                $ret->continents += $st->bonus_armies;
             }
         }
+        $ret->armies += $ret->continents;
+        $ret->continents = "Assigned {$ret->continents} for full contintent(s)";
         // check the cards
         $cards = $this->db->select("infantry, cavalry, artillery, jolly")
                           ->from("dummy_cards")
@@ -103,33 +108,40 @@ class Game_model extends CI_Model {
                           ->get()->result()[0];
         if ($cards->jolly>0) {
             if ($cards->artillery>=2) {
-                $armies += 10;
+                $ret->armies += 10;
                 $this->use_cards($id_player, "jolly","artillery","artillery");
+                $ret->cards = "Assigned 10 for Jolly and 2 Artillery";
             } elseif ($cards->infantry>=2) {
-                $armies += 10;
+                $ret->armies += 10;
                 $this->use_cards($id_player, "jolly","infantry","infantry");
+                $ret->cards = "Assigned 10 for Jolly and 2 Infantry";
             } elseif ($cards->cavalry>=2) {
-                $armies += 10;
+                $ret->armies += 10;
                 $this->use_cards($id_player, "jolly","cavalry","cavalry");
+                $ret->cards = "Assigned 10 for Jolly and 2 Cavalry";
             }
         } else {
             //three different
             if (($cards->artillery > 0) && ($cards->infantry > 0) && ($cards->cavalry > 0)) {
-                $armies += 12;
+                $ret->armies += 12;
                 $this->use_cards($id_player, "infantry","cavalry","artillery");
+                $ret->cards = "Assigned 12 for 3 different cards";
             } elseif ($cards->artillery >= 3) {
-                $armies += 8;
+                $ret->armies += 8;
                 $this->use_cards($id_player, "artillery","artillery","artillery");
+                $ret->cards = "Assigned 8 for 3 Artillery";
             } elseif ($cards->infantry >= 3) {
-                $armies += 6;
+                $ret->armies += 6;
                 $this->use_cards($id_player, "infantry","infantry","infantry");
+                $ret->cards = "Assigned 6 for 3 Infantry";
             } elseif ($cards->cavalry >= 3) {
-                $armies += 7;
+                $ret->armies += 7;
                 $this->use_cards($id_player, "cavalry","cavalry","cavalry");
+                $ret->cards = "Assigned 7 for 3 Cavalry";
             }
         }
         //return something to be displayed
-        return $armies;
+        return $ret;
     }
 
     public function dummy_place_bonus_armies($id_player) {
@@ -139,8 +151,9 @@ class Game_model extends CI_Model {
                           ->get()->result()[0];
 
         $this->db->trans_begin();
-        $armies = $this->get_bonus_armies($id_player); // this changes the cards so it must be in the transaction
         $ret = new stdClass();
+        $ret->army_bonus = $this->get_bonus_armies($id_player); // this changes the cards so it must be in the transaction
+        $armies = $ret->army_bonus->armies; // for local calculation only
         $ret->message = "Assigned $armies armies to {$dummy->pname}";
         $ret->id = $id_player;
         $ret->max_armies = $armies + $dummy->num_armies;
@@ -150,10 +163,17 @@ class Game_model extends CI_Model {
             $next_loop = false;
             if ($dummy->num_armies < $ret->max_armies) {
                 $next_loop = true;
+                $put_armies = 0;
                 //look for a potentially easy shot and reinforce nearby
-                $shot = $this->find_weak_territories($dummy->id_game, $dummy->id)[0];
-                //try to put 3 armies more than the defender
-                $put_armies = $shot->army_defender - $shot->army_attacker + 3;
+                if ($shots = $this->find_weak_territories($dummy->id_game, $dummy->id)) {
+                    //try to put 3 armies more than the defender
+                    $shot = $shots[0];
+                    $put_armies = $shot->army_defender - $shot->army_attacker + 3;
+                } else {
+                    // put an army on the weakest territory
+                    $shot = $this->find_my_weaker_territories($dummy->id_game, $dummy->id)[0];
+                    $put_armies = 1;
+                }
                 if ($put_armies <= 0) $put_armies = 1;
                 //armies available 
                 if (($left_armies = $ret->max_armies - $dummy->num_armies) > 0) {
@@ -212,6 +232,19 @@ class Game_model extends CI_Model {
 
         $this->db->trans_commit();
     }
+    
+    protected function find_my_weaker_territories($id_game, $id_player) {
+        //returns the territories of a player sorted by armies
+        $sql = "select o.id_player as id_attacker, o.id as oid,  o.armies army_attacker, origin
+                    from player_territory o
+                        inner join v_attack_lines al on o.id_territory = al.origin
+                        where o.id_game = $id_game 
+                                and o.id_player = $id_player 
+                            order by  o.armies asc";
+        //echo $sql . "\n"; die();
+        return $this->db->query($sql)->result();
+    }
+        
 
     protected function find_weak_territories($id_game, $id_player) {
         //returns a list of confining territories ordered by number of armies
@@ -224,7 +257,7 @@ class Game_model extends CI_Model {
                                 and o.id_player = $id_player and d.id_player <> $id_player
                                 and o.armies < 4
                             order by d.armies asc, o.armies asc";
-        //echo $sql . "\n";
+        //echo $sql . "\n"; 
         return $this->db->query($sql)->result();
     }
     

@@ -50,6 +50,10 @@ function run_local() {
             data = JSON.parse(data)
             $("#" + data.id + "_num_armies").html(data.max_armies)
             var testo = "<h3>" + data.message + "</h3>"
+            testo += data.army_bonus.standard + "<br>";
+            testo += data.army_bonus.continents + "<br>";
+            testo += data.army_bonus.cards + "<br>";
+            
             for(var i=0; i<data.places.length; i++) {
                 testo += data.places[i] + "<br>"
             }
