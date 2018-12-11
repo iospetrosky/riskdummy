@@ -96,8 +96,40 @@ class Game_model extends CI_Model {
                 $armies += $st->bonus_armies;
             }
         }
-
-        return $armies+10;
+        // check the cards
+        $cards = $this->db->select("infantry, cavalry, artillery, jolly")
+                          ->from("dummy_cards")
+                          ->where("id_player",$id_player)
+                          ->get()->result()[0];
+        if ($cards->jolly>0) {
+            if ($cards->artillery>=2) {
+                $armies += 10;
+                $this->use_cards($id_player, "jolly","artillery","artillery");
+            } elseif ($cards->infantry>=2) {
+                $armies += 10;
+                $this->use_cards($id_player, "jolly","infantry","infantry");
+            } elseif ($cards->cavalry>=2) {
+                $armies += 10;
+                $this->use_cards($id_player, "jolly","cavalry","cavalry");
+            }
+        } else {
+            //three different
+            if (($cards->artillery > 0) && ($cards->infantry > 0) && ($cards->cavalry > 0)) {
+                $armies += 12;
+                $this->use_cards($id_player, "infantry","cavalry","artillery");
+            } elseif ($cards->artillery >= 3) {
+                $armies += 8;
+                $this->use_cards($id_player, "artillery","artillery","artillery");
+            } elseif ($cards->infantry >= 3) {
+                $armies += 6;
+                $this->use_cards($id_player, "infantry","infantry","infantry");
+            } elseif ($cards->cavalry >= 3) {
+                $armies += 7;
+                $this->use_cards($id_player, "cavalry","cavalry","cavalry");
+            }
+        }
+        //return something to be displayed
+        return $armies;
     }
 
     public function dummy_place_bonus_armies($id_player) {
@@ -105,9 +137,9 @@ class Game_model extends CI_Model {
                           ->from("players")
                           ->where("id",$id_player)
                           ->get()->result()[0];
-        $armies = $this->get_bonus_armies($id_player);
 
         $this->db->trans_begin();
+        $armies = $this->get_bonus_armies($id_player); // this changes the cards so it must be in the transaction
         $ret = new stdClass();
         $ret->message = "Assigned $armies armies to {$dummy->pname}";
         $ret->id = $id_player;
@@ -140,7 +172,7 @@ class Game_model extends CI_Model {
             ->where("id",$dummy->id)
             ->update("players");
             
-        $this->db->trans_commit();
+        //$this->db->trans_commit();
         return $ret;
     }
 
@@ -302,6 +334,22 @@ class Game_model extends CI_Model {
         return $game;
     }
     
+    public function add_card($id_player, $card, $id_game) {
+        // id_game added for security reasons since id_player is linked 1-1 to the game
+        $sql = "update dummy_cards set $card = $card + 1 where id_player = $id_player and id_game = $id_game";
+        $this->db->query($sql);
+        return true;
+    }
+
+    public function use_cards($id_player, $card1, $card2, $card3) {
+        $sql = "update dummy_cards set $card1 = $card1 - 1 where id_player = $id_player";
+        $this->db->query($sql);
+        $sql = "update dummy_cards set $card2 = $card2 - 1 where id_player = $id_player";
+        $this->db->query($sql);
+        $sql = "update dummy_cards set $card3 = $card3 - 1 where id_player = $id_player";
+        $this->db->query($sql);
+    }
+
     public function delete_game($id_game) {
         //this should be done with a cascade delete
         //anyway ...
@@ -321,18 +369,3 @@ class Game_model extends CI_Model {
 
     
 }
-/*
-create table dummy_cards (
-    id int(11) primary key autoincrement,
-	id_player int(11) default 0,
-    infantry int(1) default 0,
-	cavalry int(1) default 0,
-	artillery int(1) default 0,
-	jolly int(1) default 0,
-    id_game int(11) default 0
-)engine=innodb collate ...
-
-
-
-*/
-    

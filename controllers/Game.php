@@ -26,7 +26,17 @@ class Game extends CI_Controller {
         } else {
             $this->load->view('game_new',$data);
         }
-	}
+    }
+    
+    public function addcard() {
+        $res = $this->game_model->add_card(
+            $this->input->post("frm_player"),
+            $this->input->post("frm_cardtype"),
+            get_cookie("current_game")
+        );
+        echo $this->input->post("frm_cardtype") . " assigned to dummy player";
+        //echo $this->input->post("frm_player") . $this->input->post("frm_cardtype");
+    }
 
     public function newgame() {
         $players = explode("\n",$this->input->post("player_names"));

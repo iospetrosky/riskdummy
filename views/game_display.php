@@ -6,6 +6,13 @@ $ajax = $bu . "/xxx/";
 var base_url = "<?php echo $bu; ?>"
 var ajax_url = "<?php echo $ajax; ?>" 
 
+function get_this_id(item) {
+    // parses the ID property of a jquery item and returns
+    // the ID which is always the first before the underscore
+    return item.attr("ID").split("_")[0]
+}
+
+
 function run_local() {
     $.ajaxSetup({ cache: false });
 
@@ -49,11 +56,18 @@ function run_local() {
             $("#ACTIONS").html(testo)
         } )
     })
+    $("#frm_assign").click(function(){
+        $.post(base_url + "/game/addcard", $("form#frm_add_card").serialize(), function(data) {
+            $("#PICK").css("visibility","hidden")
+            $("#ACTIONS").html(data)
+        })
+    })
     $(".btn_pickcard").click(function() {
         $("#ACTIONS").html("")
         $("#PICK").css("visibility","visible")
-        // assign the id to the hidden field
-        
+        var id = get_this_id($(this))
+        //$("#frm_player").val(id)
+        $("input[name=frm_player]").val(id)
     })
     $("#cmd_dummyfirst").click(function(e) {
         //id = $(this).attr("ID").split("_")[0]
@@ -140,9 +154,13 @@ echo div(
 
 <div id="PICK" style="visibility:hidden">
     <div class=the_line>
-        <input type=hidden id=frm_player value=''>
+      <form id="frm_add_card">
+        <input type=hidden id=frm_player name=frm_player value=''>
         <label for=frm_cardtype>Pick a card</label>
-        <?php        echo form_dropdown("card", array("infantry","artillery","chavalry","jolly"),0 ,array("id"=>"frm_cardtype"));        ?>
+        <?php        echo form_dropdown("frm_cardtype", array("infantry"=>"Infantry","artillery"=>"Artillery",
+                                                "cavalry"=>"Cavalry","jolly"=>"Jolly"),
+                                        0 ,array("id"=>"frm_cardtype"));        ?>
         <button type=button id=frm_assign>Assign</button>
+      </form>
     </div>
 </div>
