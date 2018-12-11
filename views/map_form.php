@@ -23,18 +23,39 @@ function run_local() {
     $("#terr_form_hide").click(function() {
         $("#terr_form").css("visibility","hidden")
     })
-    $("#terr_form_save").click(function() {
-        $.post(base_url + "/map/saveterritory", 
-                    {"id": $("#terr_id").val(), "player": $("#player_id").val(), "armies": $("#armies").val() },
-                     function(data) {
-                        $("#terr_form").css("visibility","hidden")
-                        data = JSON.parse(data)
-                        $("#"+data.id+"_celldata").html("<b>" + data.pname + "</b> - " + data.armies)
-                     } )
-        
+    $("#terr_form_save").click(function(e) {
+        saveterritory()
+    })
+    $("#armies").keyup(function(e) {
+        if (e.keyCode == 13) saveterritory()
+    })
+    $(".army_plus_button").click(function() {
+        var id = $(this).attr("ID").split("_")[0]
+        $.get(base_url + "/map/army/P/" + id, function(data) {
+            data = JSON.parse(data)
+            $("#"+data.id+"_celldata").html("<b>" + data.pname + "</b> - " + data.armies)
+        })
+    })
+    $(".army_minus_button").click(function() {
+        var id = $(this).attr("ID").split("_")[0]
+        $.get(base_url + "/map/army/M/" + id, function(data) {
+            data = JSON.parse(data)
+            $("#"+data.id+"_celldata").html("<b>" + data.pname + "</b> - " + data.armies)
+        })
     })
             
 } // run_local    
+
+function saveterritory() {
+    $.post(base_url + "/map/saveterritory", 
+                {"id": $("#terr_id").val(), "player": $("#player_id").val(), "armies": $("#armies").val() },
+                 function(data) {
+                    $("#terr_form").css("visibility","hidden")
+                    data = JSON.parse(data)
+                    $("#"+data.id+"_celldata").html("<b>" + data.pname + "</b> - " + data.armies)
+                 } )
+}
+
     
 </script>
 <div style="" id="map_border">
@@ -72,6 +93,8 @@ foreach($cells as $cell) {
                             $cell->pcolor,
                             $cell->pname,
                             $cell->armies);
+    $content .= button("+",array("class"=>"army_plus_button","id"=>$cell->id . "_plus")) .
+                button("-",array("class"=>"army_minus_button","id"=>$cell->id . "_minus"));
     $line .= div($content,array("class"=>"map_cell continent_{$cell->id_continent}","id"=>$cell->id . "_terr"));
     $last_x = $cell->map_x;
 }

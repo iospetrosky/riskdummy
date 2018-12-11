@@ -10,6 +10,11 @@ class Game extends CI_Controller {
         $this->load->model('sets_model');
     }
     
+    public function joingame($id) {
+        set_cookie("current_game",$id,10000000);
+        echo "Game set to $id - now load another page";
+    }
+    
 	public function index()	{
         $data["url"] = explode("/", $this->uri->uri_string());
         $data["css"] = array("combat");
@@ -99,7 +104,6 @@ class Game extends CI_Controller {
     
     public function startattack($id_player) {
         $res = $this->game_model->start_attack($id_player, get_cookie("current_game"));
-        //now the game part... throw dice etc.
         //return the form to manage the attack
         $form = form_open(config_item('base_url') . '/' . config_item('index_page') . '/game/finalizeattack', "", array(
                                 "id_attacker" => $res->id_attacker,
@@ -124,10 +128,13 @@ class Game extends CI_Controller {
         $attack_rolls_b = "";
         for ($d=10;$d<$res->army_attacker-1+10;$d++) {
             $attack_rolls_a .= div("0", array("class"=>"dice_roll","id"=>"{$d}_dice","style"=>"border-color:red") );
+            if ($d == 12) break;
         }
         for ($d=20;$d<$res->army_defender+20;$d++) {
             $attack_rolls_b .= div("0", array("class"=>"dice_roll","id"=>"{$d}_dice","style"=>"border-color:green") );
+            if ($d == 22) break;
         }
+        $attack_rolls_b .= button("Reset",array("id"=>"cmd_reset_dice"));
         
         $form .= div(
                     div($attack_rolls_a, array("class"=>"cmb_cell")) .
@@ -162,5 +169,3 @@ class Game extends CI_Controller {
     }
     
 }
-// alter table continents add bonus_armies int(1) default 0; 
-// alter table continents add num_territories int(2) default 0;  

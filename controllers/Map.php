@@ -42,6 +42,18 @@ class Map extends CI_Controller {
         echo json_encode($res);
     }
     
+    public function army($sign, $id) {
+        // id of player_territory
+        switch($sign) {
+            case 'P':
+                $res = $this->map_model->change_army($id, 1);
+                break;
+            case 'M':
+                $res = $this->map_model->change_army($id, -1);
+                break;
+        }
+        echo json_encode($res);
+    }
     
 }
     

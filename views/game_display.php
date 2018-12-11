@@ -49,6 +49,12 @@ function run_local() {
             $("#ACTIONS").html(testo)
         } )
     })
+    $(".btn_pickcard").click(function() {
+        $("#ACTIONS").html("")
+        $("#PICK").css("visibility","visible")
+        // assign the id to the hidden field
+        
+    })
     $("#cmd_dummyfirst").click(function(e) {
         //id = $(this).attr("ID").split("_")[0]
         $.get(base_url + "/game/dummyfirst", function(data) {
@@ -64,7 +70,11 @@ function run_local() {
     }).on("click","input",function(e){
         //this is for the dynamically created items
         $(this).select()
-    })
+    }).on("click","#cmd_reset_dice",function(e) {
+        $(".dice_roll").each(function() {
+            $(this).html("0")
+        })
+    });
     $("input").on("click",function(e){
         //this is for the others
         $(this).select()
@@ -101,24 +111,38 @@ foreach($game->players as $pl) {
         div($pl->num_territories,array("class"=>"row_edit_cell","style"=>"width:50px")) .
         div($pl->num_armies,array("class"=>"row_edit_cell","style"=>"width:50px","id"=>$pl->id . "_num_armies")) .
         ($pl->ptype == 'D'?div(button("Reinforce",array("id" => $pl->id . "_btn_reinforce", "class" => "btn_reinforce")) . 
-                               button("Attack",array("id" => $pl->id . "_btn_attack", "class" => "btn_attack")),
+                               button("Attack",array("id" => $pl->id . "_btn_attack", "class" => "btn_attack")) .
+                               button("Pick card",array("id" => $pl->id . "_btn_pick", "class" => "btn_pickcard")),
                                 array("class"=>"row_edit_cell","style"=>"width:200px")):"") 
         
     );
 }
 
+$dummy_first = "";
+if ($game->dummy_placed == 0) {
+    $dummy_first = div(button("First turn dummies",array("id"=>"cmd_dummyfirst")),
+            array("class"=>"row_edit_cell","style"=>"width:50px"));
+} 
 echo div(
     div(button("Quit game",array("id"=>"cmd_delete") ),
             array("class"=>"row_edit_cell","style"=>"width:150px")) .
     div("",array("class"=>"row_edit_cell","style"=>"width:20px")) .
     div(button("Save colors",array("id"=>"cmd_savecolors")), 
             array("class"=>"row_edit_cell","style"=>"width:90px")) .
-    div(button("First turn dummies",array("id"=>"cmd_dummyfirst")),
-            array("class"=>"row_edit_cell","style"=>"width:50px")) .
+    $dummy_first .
     div("",array("class"=>"row_edit_cell","style"=>"width:50px")) .
     div("",array("class"=>"row_edit_cell","style"=>"width:200px")) 
 );
 ?>
 <div id="ACTIONS">
 
+</div>
+
+<div id="PICK" style="visibility:hidden">
+    <div class=the_line>
+        <input type=hidden id=frm_player value=''>
+        <label for=frm_cardtype>Pick a card</label>
+        <?php        echo form_dropdown("card", array("infantry","artillery","chavalry","jolly"),0 ,array("id"=>"frm_cardtype"));        ?>
+        <button type=button id=frm_assign>Assign</button>
+    </div>
 </div>

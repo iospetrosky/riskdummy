@@ -36,6 +36,8 @@ class Game_model extends CI_Model {
             $data["pname"] = trim($pl);
             $data["pcolor"] = $colors[$j];
             $this->db->insert("players",$data);
+            $id_player = $this->db->insert_id();
+            $this->db->insert("dummy_cards",array("id_player"=>$id_player, "id_game"=>$id_game));
             $j++;
         }
         if ($auto == 'Y') {
@@ -104,28 +106,23 @@ class Game_model extends CI_Model {
                           ->where("id",$id_player)
                           ->get()->result()[0];
         $armies = $this->get_bonus_armies($id_player);
-        echo "<pre>";
-        echo $armies; 
+
         $this->db->trans_begin();
         $ret = new stdClass();
         $ret->message = "Assigned $armies armies to {$dummy->pname}";
         $ret->id = $id_player;
-
-        $k = 0;
-
         $ret->max_armies = $armies + $dummy->num_armies;
         $ret->places = array(); // list of army assignments
+        $k = 0;
         do {
             $next_loop = false;
-            $k++; if ($k >8) die("azzo");            
             if ($dummy->num_armies < $ret->max_armies) {
                 $next_loop = true;
                 //look for a potentially easy shot and reinforce nearby
                 $shot = $this->find_weak_territories($dummy->id_game, $dummy->id)[0];
-                print_r($shot); 
                 //try to put 3 armies more than the defender
                 $put_armies = $shot->army_defender - $shot->army_attacker + 3;
-                if ($put_armies == 0) $put_armies = 1;
+                if ($put_armies <= 0) $put_armies = 1;
                 //armies available 
                 if (($left_armies = $ret->max_armies - $dummy->num_armies) > 0) {
                     if ($left_armies < $put_armies) $put_armies = $left_armies;
@@ -134,17 +131,16 @@ class Game_model extends CI_Model {
                     $orig_name = $this->db->select("tname")->from("territories")
                                       ->where("id",$shot->origin)->get()->result()[0]->tname;
                     $ret->places[] = "$put_armies positioned on {$orig_name}";
-                    print_r($ret); 
                 }
             }
-        } while($next_loop);
+        } while(($next_loop) && ($k++<10)); // max 10 attempts then exit anyway
         // update the dummy
         unset($dummy->id_game); unset($dummy->pname);
         $this->db->set($dummy)
             ->where("id",$dummy->id)
             ->update("players");
             
-        //$this->db->trans_commit();
+        $this->db->trans_commit();
         return $ret;
     }
 
@@ -194,8 +190,9 @@ class Game_model extends CI_Model {
                         inner join player_territory d on al.destination = d.id_territory
                         where o.id_game = $id_game and d.id_game = $id_game 
                                 and o.id_player = $id_player and d.id_player <> $id_player
+                                and o.armies < 4
                             order by d.armies asc, o.armies asc";
-        //echo $sql;
+        //echo $sql . "\n";
         return $this->db->query($sql)->result();
     }
     
@@ -213,8 +210,12 @@ class Game_model extends CI_Model {
         return $this->db->query($sql)->result();
     }
     public function start_attack($id_player, $id_game) {
-        //the player identifies an easy shot and performs also the necessary dice rolls
+        //the player identifies an easy shot 
         $easy = $this->find_easy_attacks($id_game, $id_player)[0];
+        // actually this is not true. The attack is made with 3 or more armies
+        // but the player can throw only 3 dice. Unless we don't refresh every time
+        //if ($easy->army_attacker > 4) $easy->army_attacker = 4;
+        //if ($easy->army_defender > 3) $easy->army_defender = 3;
         //add some cosmetic info
         //name of territories
         $easy->origin_name = $this->db->select("tname")
@@ -308,6 +309,7 @@ class Game_model extends CI_Model {
         $this->db->delete("players",array("id_game"=>$id_game));
         $this->db->delete("games",array("id"=>$id_game));
         $this->db->delete("player_territory",array("id_game"=>$id_game));
+        $this->db->delete("dummy_cards",array("id_game"=>$id_game));
         $this->db->trans_commit();
     }
 
@@ -319,4 +321,18 @@ class Game_model extends CI_Model {
 
     
 }
+/*
+create table dummy_cards (
+    id int(11) primary key autoincrement,
+	id_player int(11) default 0,
+    infantry int(1) default 0,
+	cavalry int(1) default 0,
+	artillery int(1) default 0,
+	jolly int(1) default 0,
+    id_game int(11) default 0
+)engine=innodb collate ...
+
+
+
+*/
     

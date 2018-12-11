@@ -19,6 +19,14 @@ class Map_model extends CI_Model {
         return $query->result();
     }
     
+    public function change_army($id, $num) {
+        $old = $this->db->select("*")
+                           ->from("player_territory")
+                           ->where("id",$id)
+                           ->get()->result()[0];
+        return $this->save_territory($old->id, $old->id_player, $old->armies + $num, $old->id_game);
+    }
+    
     public function save_territory($id,$player,$armies,$id_game) {
         $old_player = $this->db->select("id_player")
                            ->from("player_territory")
