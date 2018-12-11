@@ -106,6 +106,7 @@ class Game_model extends CI_Model {
                           ->from("dummy_cards")
                           ->where("id_player",$id_player)
                           ->get()->result()[0];
+        $ret->cards = "No cards bonus";
         if ($cards->jolly>0) {
             if ($cards->artillery>=2) {
                 $ret->armies += 10;
@@ -140,7 +141,6 @@ class Game_model extends CI_Model {
                 $ret->cards = "Assigned 7 for 3 Cavalry";
             }
         }
-        //return something to be displayed
         return $ret;
     }
 
