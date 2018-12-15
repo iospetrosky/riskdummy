@@ -29,13 +29,15 @@ class Game extends CI_Controller {
     }
     
     public function addcard() {
+        /*echo $this->input->post("frm_player"), "-",
+            $this->input->post("frm_cardtype"), "+",
+            get_cookie("current_game"); die();*/
         $res = $this->game_model->add_card(
             $this->input->post("frm_player"),
             $this->input->post("frm_cardtype"),
             get_cookie("current_game")
         );
         echo $this->input->post("frm_cardtype") . " assigned to dummy player";
-        //echo $this->input->post("frm_player") . $this->input->post("frm_cardtype");
     }
 
     public function newgame() {
@@ -85,7 +87,6 @@ class Game extends CI_Controller {
             $this->input->post("did"),
             $this->input->post("id_defender"),
             (int)$this->input->post("defense_loss")
-            //$this->input->post("invasion")
         );
         header("Location: " . config_item('base_url') . '/' . config_item('index_page') . "/play/map");
         die();

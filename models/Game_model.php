@@ -109,26 +109,26 @@ class Game_model extends CI_Model {
         $ret->cards = "No cards bonus";
         if ($cards->jolly>0) {
             if ($cards->artillery>=2) {
-                $ret->armies += 10;
+                $ret->armies += 12;
                 $this->use_cards($id_player, "jolly","artillery","artillery");
                 $ret->cards = "Assigned 10 for Jolly and 2 Artillery";
             } elseif ($cards->infantry>=2) {
-                $ret->armies += 10;
+                $ret->armies += 12;
                 $this->use_cards($id_player, "jolly","infantry","infantry");
                 $ret->cards = "Assigned 10 for Jolly and 2 Infantry";
             } elseif ($cards->cavalry>=2) {
-                $ret->armies += 10;
+                $ret->armies += 12;
                 $this->use_cards($id_player, "jolly","cavalry","cavalry");
                 $ret->cards = "Assigned 10 for Jolly and 2 Cavalry";
             }
         } else {
             //three different
             if (($cards->artillery > 0) && ($cards->infantry > 0) && ($cards->cavalry > 0)) {
-                $ret->armies += 12;
+                $ret->armies += 10;
                 $this->use_cards($id_player, "infantry","cavalry","artillery");
                 $ret->cards = "Assigned 12 for 3 different cards";
             } elseif ($cards->artillery >= 3) {
-                $ret->armies += 8;
+                $ret->armies += 4;
                 $this->use_cards($id_player, "artillery","artillery","artillery");
                 $ret->cards = "Assigned 8 for 3 Artillery";
             } elseif ($cards->infantry >= 3) {
@@ -136,7 +136,7 @@ class Game_model extends CI_Model {
                 $this->use_cards($id_player, "infantry","infantry","infantry");
                 $ret->cards = "Assigned 6 for 3 Infantry";
             } elseif ($cards->cavalry >= 3) {
-                $ret->armies += 7;
+                $ret->armies += 8;
                 $this->use_cards($id_player, "cavalry","cavalry","cavalry");
                 $ret->cards = "Assigned 7 for 3 Cavalry";
             }
@@ -192,7 +192,7 @@ class Game_model extends CI_Model {
             ->where("id",$dummy->id)
             ->update("players");
             
-        //$this->db->trans_commit();
+        $this->db->trans_commit();
         return $ret;
     }
 
