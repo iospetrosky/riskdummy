@@ -198,12 +198,13 @@ class Game_model extends CI_Model {
 
 
     public function dummy_first_army_placement($id_game) {
-        // there may be more than one dummy so the act in turn
+        // there may be more than one dummy so they act in turn
         // dummies look for easy shots
         $dummies = $this->db->query("select id, num_territories, num_armies, pname from players where ptype='D' and id_game = $id_game")->result();
-        $max_armies = 35; // this depends from the number of players... see the rules
+        $max_armies = 35; // this depends on the number of players... see the rules
         $this->db->trans_begin();
         do {
+            $next_loop = false;
             // loop goes on until there is at least one dummy with armies
             foreach($dummies as &$dummy) {
                 if ($dummy->num_armies < $max_armies) {
@@ -218,7 +219,7 @@ class Game_model extends CI_Model {
                         $dummy->num_armies += $put_armies;
                         $this->db->query("update player_territory set armies = armies + ? where id = ?",array($put_armies, $shot->oid));
                     }
-                }
+                } 
             }
         } while($next_loop);
         foreach($dummies as $dummy) {
@@ -257,7 +258,7 @@ class Game_model extends CI_Model {
                                 and o.id_player = $id_player and d.id_player <> $id_player
                                 and o.armies < 4
                             order by d.armies asc, o.armies asc";
-        //echo $sql . "\n"; 
+        //echo $sql . "<br>"; 
         return $this->db->query($sql)->result();
     }
     

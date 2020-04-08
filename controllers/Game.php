@@ -9,12 +9,12 @@ class Game extends CI_Controller {
         $this->load->model('game_model');
         $this->load->model('sets_model');
     }
-    
+    /*
     public function joingame($id) {
         set_cookie("current_game",$id,10000000);
         echo "Game set to $id - now load another page";
     }
-    
+    */
 	public function index()	{
         $data["url"] = explode("/", $this->uri->uri_string());
         $data["css"] = array("combat");
@@ -29,9 +29,6 @@ class Game extends CI_Controller {
     }
     
     public function addcard() {
-        /*echo $this->input->post("frm_player"), "-",
-            $this->input->post("frm_cardtype"), "+",
-            get_cookie("current_game"); die();*/
         $res = $this->game_model->add_card(
             $this->input->post("frm_player"),
             $this->input->post("frm_cardtype"),
@@ -51,6 +48,15 @@ class Game extends CI_Controller {
         $data["url"] = explode("/", $this->uri->uri_string());
         $data["game"] = $this->game_model->get_game($res); // gets an object including players and dummies
 
+        $this->load->view('intro',$data);
+        $this->load->view('game_display',$data);
+    }
+    
+    public function joingame() {
+        $res = $this->input->get("game_id");
+        set_cookie("current_game",$res,10000000);
+        $data["url"] = explode("/", $this->uri->uri_string());
+        $data["game"] = $this->game_model->get_game($res); // gets an object including players and dummies
         $this->load->view('intro',$data);
         $this->load->view('game_display',$data);
     }
@@ -88,7 +94,7 @@ class Game extends CI_Controller {
             $this->input->post("id_defender"),
             (int)$this->input->post("defense_loss")
         );
-        header("Location: " . config_item('base_url') . '/' . config_item('index_page') . "/play/map");
+        header("Location: " . config_item('base_url') . config_item('index_page') . "/play/map");
         die();
     }
     
@@ -105,18 +111,18 @@ class Game extends CI_Controller {
             echo "Dummies already placed!";
         }
     }
-
+/* deprecated
     public function roll($dice_id) {
         $ret = new stdClass();
         $ret->id = $dice_id;
         $ret->roll = rand(1,6);
         echo json_encode($ret);
     }
-    
+    */
     public function startattack($id_player) {
         $res = $this->game_model->start_attack($id_player, get_cookie("current_game"));
         //return the form to manage the attack
-        $form = form_open(config_item('base_url') . '/' . config_item('index_page') . '/game/finalizeattack', "", array(
+        $form = form_open(config_item('base_url') . config_item('index_page') . '/game/finalizeattack', "", array(
                                 "id_attacker" => $res->id_attacker,
                                 "id_defender" => $res->id_defender,
                                 "oid" => $res->oid, // player_territory ID of the origin
@@ -138,14 +144,17 @@ class Game extends CI_Controller {
         $attack_rolls_a = "";
         $attack_rolls_b = "";
         for ($d=10;$d<$res->army_attacker-1+10;$d++) {
-            $attack_rolls_a .= div("0", array("class"=>"dice_roll","id"=>"{$d}_dice","style"=>"border-color:red") );
+            $attack_rolls_a .= div("0", array("class"=>"dice_roll dice_attack","id"=>"{$d}_dice","style"=>"border-color:red") );
             if ($d == 12) break;
         }
         for ($d=20;$d<$res->army_defender+20;$d++) {
-            $attack_rolls_b .= div("0", array("class"=>"dice_roll","id"=>"{$d}_dice","style"=>"border-color:green") );
+            $attack_rolls_b .= div("0", array("class"=>"dice_roll dice_defend","id"=>"{$d}_dice","style"=>"border-color:green") );
             if ($d == 22) break;
         }
+        $attack_rolls_b .= "<br>";
         $attack_rolls_b .= button("Reset",array("id"=>"cmd_reset_dice"));
+        $attack_rolls_b .= button("Calc result",array("id"=>"cmd_calc_result"));
+        
         
         $form .= div(
                     div($attack_rolls_a, array("class"=>"cmb_cell")) .
@@ -165,8 +174,7 @@ class Game extends CI_Controller {
                     );
         $form .= div(
                     form_label("Defender losses", "def_loss")  .
-                    form_input("defense_loss", 0,"id=def_loss size=2") .
-                    span(" (of {$res->army_defender})"),
+                    form_input("defense_loss", 0,"id=def_loss size=2") ,
                     array("class"=>"cmb_line") 
                     );
         $form .= div(

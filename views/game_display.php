@@ -1,10 +1,9 @@
 <?php
-$bu = config_item('base_url') . '/' . config_item('index_page');
-$ajax = $bu . "/xxx/";
+$bu = config_item('base_url') . config_item('index_page');
+$ajax = $bu . "xxx/";
 ?>
 <script type='text/javascript'>
-var base_url = "<?php echo $bu; ?>"
-var ajax_url = "<?php echo $ajax; ?>" 
+//var ajax_url = "<?php echo $ajax; ?>" 
 
 function get_this_id(item) {
     // parses the ID property of a jquery item and returns
@@ -81,10 +80,7 @@ function run_local() {
         } )
     })
     $("#ACTIONS").on("click", ".dice_roll", function(e) {
-        $.get(base_url + "/game/roll/"+$(this).attr("ID"), function(data) {
-            data = JSON.parse(data)
-            $("#" + data.id ).html(data.roll)
-        } )
+        $(this).html(Math.floor(Math.random() * 6) + 1)  
     }).on("click","input",function(e){
         //this is for the dynamically created items
         $(this).select()
@@ -92,6 +88,30 @@ function run_local() {
         $(".dice_roll").each(function() {
             $(this).html("0")
         })
+    }).on("click","#cmd_calc_result", function(e) {
+        var att_dice = []
+        var def_dice = []
+        var j, att_loss, def_loss
+        $(".dice_attack").each(function() {
+            att_dice.push(parseInt($(this).html()))
+        })
+        $(".dice_defend").each(function() {
+            j = parseInt($(this).html())
+            if (j) { def_dice.push(j) }
+        })
+        att_dice.sort().reverse()
+        def_dice.sort().reverse()
+        att_loss = 0
+        def_loss = 0
+        for (j=0; j<att_dice.length && j<def_dice.length; j++) {
+            if (att_dice[j] > def_dice[j]) {
+                def_loss++
+            } else {
+                att_loss++
+            }
+        }
+        $("#att_loss").val(att_loss)
+        $("#def_loss").val(def_loss)
     });
     $("input").on("click",function(e){
         //this is for the others

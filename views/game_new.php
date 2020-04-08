@@ -1,10 +1,9 @@
 <?php
-$bu = config_item('base_url') . '/' . config_item('index_page');
+$bu = config_item('base_url')  . config_item('index_page');
 $ajax = $bu . "/xxx/";
 ?>
 <script type='text/javascript'>
-var base_url = "<?php echo $bu; ?>"
-var ajax_url = "<?php echo $ajax; ?>" 
+//var ajax_url = "<?php echo $ajax; ?>" 
 
 
 function run_local() {
@@ -30,11 +29,19 @@ function run_local() {
 <div class=form_line>
     <label for=autoassign>Auto assign territories</label><input type=checkbox name=autoassign id=autoassign value="Y">
 </div>
-
-
 <div class=form_line>
     <button id=save_game>Create game</button>
 </div>
+</form>
 
+<hr>
 
+<form name=join_game id=join_game method=get action=<?php echo $bu . "/game/joingame"; ?> >
+<div class=form_line>
+    <label for=id_game">Game ID</label><input name=game_id id=game_id size=12></textarea>
+</div>
+
+<div class=form_line>
+    <button id=save_game>Join game</button>
+</div>
 </form>
